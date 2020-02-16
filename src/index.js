@@ -2,8 +2,8 @@ import 'dotenv/config';
 import express from 'express';
 var favicon = require('serve-favicon');
 const pug = require('pug');
-
-
+//file system
+var fs = require('fs');
 //apivideo
 const apiVideo = require('@api.video/nodejs-sdk');
 //set up client
@@ -49,6 +49,13 @@ app.post('/', (req,res) =>{
 	}
 	let result = client.videos.upload(files.source.path, {title: fields.title, description: fields.description, mp4Support: mp4Support});
 	result.then(function(video) {
+	  //delete file on node server
+		fs.unlink(files.source.path, function (err) {
+    	if (err) throw err;
+    	// if no error, file has been deleted successfully
+    	console.log('File deleted!');
+		}); 
+	  //get information from API.video	
 	  console.log('video', video);
 	  let videoId = video.videoId;
 	  console.log('videoId', videoId);
@@ -58,7 +65,7 @@ app.post('/', (req,res) =>{
 	  //check video status until it is published
 	  //when video is playable resturn the video page
 	  videoStatus(video, function() {
-	  	return res.render('video', {iframe});
+	  	return res.render('video', {iframe, player});
 	  }
       
 	  );
