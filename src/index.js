@@ -47,9 +47,13 @@ app.post('/', (req,res) =>{
 	if (fields.mp4 =="true"){
 		mp4Support = true;	
 	}
+	let startUploadTimer = Date.now();
+	let uploadCompleteTimer;
+	let playReadyTimer;
 	let result = client.videos.upload(files.source.path, {title: fields.title, description: fields.description, mp4Support: mp4Support});
 	result.then(function(video) {
-	  //delete file on node server
+		uploadCompleteTimer = Date.now();
+	   //delete file on node server
 		fs.unlink(files.source.path, function (err) {
     	if (err) throw err;
     	// if no error, file has been deleted successfully
