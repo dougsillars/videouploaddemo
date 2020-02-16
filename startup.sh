@@ -1,5 +1,5 @@
 env
 cd /home/ubuntu/videosite
 git pull
-npm run startprod
-~                              
+/usr/bin/npm run startprod
+                          
