@@ -8,9 +8,12 @@ const apiVideo = require('@api.video/nodejs-sdk');
 //set up api.video client with my production key
 //I keep my key in a .env file to keep it private.
 //if you have a .env file, make sure you add it to your .gitignore file
-const client = new apiVideo.Client({ apiKey: process.env.APIVIDEO_Key });
+var client = new apiVideo.Client({ apiKey: process.env.apivideoKeyProd});
 
 
+//using intercom to read the email address and save as a contact
+var Intercom = require('intercom-client');
+var intercomClient = new Intercom.Client({ token: process.env.intercomToken });
 //express for the website and pug to create the pages
 const app = express();
 const pug = require('pug');
@@ -25,7 +28,8 @@ app.use(favicon('public/icon.ico'));
 
 //formidable takes the form data and saves the file, and parameterises the fields into JSON
 const formidable = require('formidable')
-
+//email-validator to validate the email address
+var validator = require("email-validator");
 
 //ctreate timers to measure upload and processing timings
     let startUploadTimer;
@@ -41,6 +45,7 @@ app.get('/', (req, res) => {
 //the form posts the data to the same location
 //so now we'll deal with the submitted data
 app.post('/', (req,res) =>{
+	
     //formidable reads the form
 	var form = new formidable.IncomingForm();
 	//use .env feil to set the directory for the video uploads
@@ -55,7 +60,7 @@ app.post('/', (req,res) =>{
 		throw err;
     }
 	//testing - writing fields and info on the file to the log
-    //console.log('Fields', fields);
+    console.log('Fields', fields);
     //console.log('Files', files.source);
 	//console.log('file size', files.source.size);
 	//console.log('file path', files.source.path);
@@ -66,6 +71,25 @@ app.post('/', (req,res) =>{
 	if (fields.mp4 =="true"){
 		mp4Support = true;	
 	}
+	//if email address is added use prod
+	console.log('valid email?', fields.email, validator.validate(fields.email));
+	if(validator.validate(fields.email)){
+		//prod
+        console.log("using production!");
+		//there is a valid email address, let's write it to Indercom
+		// Create a contact with attributes
+		intercomClient.leads.create({ email: fields.email}, function (r) {
+		  console.log(r);
+		});
+		
+	}else{
+		//sandbox
+		//set up api.video client with my sandbox key
+		client = new apiVideo.ClientSandbox({ apiKey: process.env.apivideoKeySandBox});
+		console.log("using sandbox!");
+	}
+		
+	//metadata must be converted into an array
 	
 	//uploading.  Timers are for a TODO measuring upload & parsing time
 	startUploadTimer = Date.now();

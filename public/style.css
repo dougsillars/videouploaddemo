@@ -4,7 +4,7 @@
   padding-bottom: 25px;
   width: 100%;
   color: #FFFFFF;
-  background-color: #525286
+  background-image: linear-gradient(#FC601A, #FD8B25)
   
   }
 .formPadding{
@@ -17,7 +17,7 @@
   background: #fff;
   padding: 20px;
   border-style: solid;
-  border-color: green;
+  border-color: #A5A5A5;
   border-width: 3px;
 
 

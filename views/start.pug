@@ -2,8 +2,14 @@ head
   link(rel='stylesheet', href='../style.css')
   link(rel='icon', href='icon.ico', type='image/x-icon')
 body
+  header.header 
+    h1 Test out api.video
+  
+  h2 Upload a video, and have an encoded video stream in no time!  
+  h2 If you add your e-mail address, your video will be available without watermark. 
+  h2 Without an e-mail address, your video will be watermarked and deleted in 72 hours.
+  
   form(action="/" method = "POST" enctype="multipart/form-data").form  
-    p
     | Upload a video:
     p
     | Video Name:
@@ -12,13 +18,19 @@ body
     | Description:
     input(type='text', name='description', value="video description").input
     p
+    | Email Address:
+    input(type='email', name='email').input
+    p
     |Save as Mp4?
     input(type='radio', name='mp4', value='true', checked) 
     | true 
     input(type='radio', name='mp4', value='false') 
     | false
     p
-    input(type='file', name='source').input   
+    input(type='file', name='source').input 
+    input(type='hidden' name='metadata' value='{"videoUpload":"true"}')  
     p   
     p
     input(type='submit', value='Submit')
+	
+  i By submitting your e-mail, you agree to receive (very occasional) e-mails from api.video. 

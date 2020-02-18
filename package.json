@@ -6,8 +6,8 @@
   "scripts": {
     "start": "nodemon --exec babel-node src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "startprod": "babel-node src/index.js" 
- },
+    "startprod": "babel-node src/index.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dougsillars/videosite.git"
@@ -28,8 +28,11 @@
   "dependencies": {
     "@api.video/nodejs-sdk": "^1.8.2",
     "dotenv": "^8.2.0",
+    "email-validator": "^2.0.4",
     "express": "^4.17.1",
+    "express-validator": "^6.4.0",
     "formidable": "^1.2.1",
+    "intercom-client": "^2.11.0",
     "pug": "^2.0.4",
     "serve-favicon": "^2.5.0"
   }
