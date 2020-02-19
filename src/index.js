@@ -84,7 +84,7 @@ app.post('/', (req,res) =>{
 		//set up api.video client with my sandbox key
 		client = new apiVideo.ClientSandbox({ apiKey: process.env.apivideoKeySandBox});
 		console.log("using sandbox!");
-		useProduction = true;
+		useProduction = false;
 	}
 		
 	//metadata must be converted into an array
