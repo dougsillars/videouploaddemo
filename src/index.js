@@ -15,7 +15,6 @@ var client = new apiVideo.Client({ apiKey: process.env.apivideoKeyProd});
 var Intercom = require('intercom-client');
 var intercomClient = new Intercom.Client({ token: process.env.intercomToken });
 const intercomAdmin = process.env.intercomAdminId;
-console.log("intercom admin:", intercomAdmin);
 //express for the website and pug to create the pages
 const app = express();
 const pug = require('pug');
