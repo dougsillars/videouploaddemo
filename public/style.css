@@ -13,7 +13,7 @@
   
   
 .form {
-  font-size: 20px;
+  font-size: 25px;
   width: 90%;
   background: #fff;
   padding: 20px;
@@ -26,11 +26,18 @@ input[type=text], input[type=url], input[type=email], input[type=password], inpu
   -webkit-appearance: none; -moz-appearance: none;
   margin: 0;
   width: 100%; height: 40px;
-  line-height: 40px;font-size: 17px;
+  line-height: 40px;font-size: 25px;
   
 }
-input[type=submit] {
+input[type=radio] {
+ width: 25px; height: 25px;
+ -webkit-border-radius: 22px; -moz-border-radius: 22px; border-radius: 22px;
+ border: 1px solid #bbb;
+}
+
+input[type=submit]{
     -webkit-appearance: none; -moz-appearance: none;
+	line-height: 40px;font-size: 17px;
     display: block;
     margin: 1.5em 0;
     font-size: 1em; line-height: 2.5em;
