@@ -184,9 +184,25 @@ function intercomIntegration(email,player, mp4,mp4Support,upload,process){
 	//there is a valid email address, let's write it to Indercom
 	// Create a contact with attributes
 	intercomClient.leads.create({ email: email, tags: "upload demo"}, function (r) {
-	  //console.log(r);
-	  console.log("user creation:", r.body);
-	  let intercomId = r.body.id;
+		var intercomId="";
+		console.log("user creation:", r.body);
+		if(r.body.errors){
+			//user already exists
+			//get the ID
+			var errorString = r.body.errors[0].message;
+			console.log("errorstring",errorString);
+			var idStart = errorString.lastIndexOf("=") +1;
+			
+			intercomId =errorString.substring(idStart);
+			console.log("retrived id",intercomId);
+			
+		}else {
+			//user created
+			intercomId = r.body.id;
+			console.log("user creation:", r.body);
+		}
+	  
+	  
 	  //add upload demo tag
 	  intercomClient.tags.tag({ name: 'upload demo', users: [{ id: intercomId }] }, function (tag){
 		  console.log("tag addition", tag.body);
@@ -194,12 +210,12 @@ function intercomIntegration(email,player, mp4,mp4Support,upload,process){
 	  //send an email with the video links
 	  var emailbody = "";
 	  if (mp4Support) {
-	    emailbody = "Hi there,\n  thank you for using our upload demo.  Your video was uploaded in "+upload+" seconds, and processed in "+process+" seconds. You can see your video here: "
-	                  +player+".  You can view the mp4 at " + mp4 +". Come learn more at <a href\"https://api.video\">api.video</a>"
+	    emailbody = "Hi " +email+",\n  Thank you for using our upload demo.  Your video was uploaded in "+upload+" seconds, and processed in "+process+" seconds. You can see your video here: "
+	                  +player+".  You can view the mp4 at " + mp4 +". Come learn more at <a href\"https://api.video\"> api.video</a>"
 					  +"\n Thanks, \n the api.video team";
 	  }else{
-		  emailbody = "Hi there,\n  thank you for using our upload demo.  Your video was uploaded in "+upload+" seconds, and processed in "+process+" seconds. You can see your video here: "
-	                  +player+". Come learn more at <a href\"https://api.video\">api.video</a>"
+		  emailbody = "Hi " +email+",\n  Thank you for using our upload demo.  Your video was uploaded in "+upload+" seconds, and processed in "+process+" seconds. You can see your video here: "
+	                  +player+". Come learn more at <a href\"https://api.video\"> api.video</a>"
 		  				+"\n Thanks, \n the api.video team";
 	  		
 	  }
