@@ -14,6 +14,8 @@ var client = new apiVideo.Client({ apiKey: process.env.apivideoKeyProd});
 //using intercom to read the email address and save as a contact
 var Intercom = require('intercom-client');
 var intercomClient = new Intercom.Client({ token: process.env.intercomToken });
+const intercomAdmin = process.env.intercomAdminId;
+console.log("intercom admin:", intercomAdmin);
 //express for the website and pug to create the pages
 const app = express();
 const pug = require('pug');
@@ -72,21 +74,18 @@ app.post('/', (req,res) =>{
 		mp4Support = true;	
 	}
 	//if email address is added use prod
+	let useProduction = true;
 	console.log('valid email?', fields.email, validator.validate(fields.email));
 	if(validator.validate(fields.email)){
 		//prod
         console.log("using production!");
-		//there is a valid email address, let's write it to Indercom
-		// Create a contact with attributes
-		intercomClient.leads.create({ email: fields.email}, function (r) {
-		  console.log(r);
-		});
 		
 	}else{
 		//sandbox
 		//set up api.video client with my sandbox key
 		client = new apiVideo.ClientSandbox({ apiKey: process.env.apivideoKeySandBox});
 		console.log("using sandbox!");
+		useProduction = true;
 	}
 		
 	//metadata must be converted into an array
@@ -94,7 +93,7 @@ app.post('/', (req,res) =>{
 	//uploading.  Timers are for a TODO measuring upload & parsing time
 	startUploadTimer = Date.now();
 	console.log("start upload", startUploadTimer);
-	let result = client.videos.upload(files.source.path, {title: fields.title, description: fields.description, mp4Support: mp4Support});
+	let result = client.videos.upload(files.source.path, {title: fields.title, mp4Support: mp4Support});
 	
 	//the result is the upload response
 	//see https://docs.api.video/5.1/videos/create-video
@@ -116,6 +115,12 @@ app.post('/', (req,res) =>{
 	  console.log('player', video.assets.player);
 	  let iframe = video.assets.iframe;
 	  let player = video.assets.player;
+	  let mp4 = video.assets.mp4;
+	  
+	  
+
+	  
+	  
 	  //check video status until it is published
 	  //when video is playable resturn the video page
 	  videoStatus(video);
@@ -129,6 +134,7 @@ app.post('/', (req,res) =>{
 	  	let status = client.videos.getStatus(videoId);
 	      status.then(function(videoStats){
 	      	//console.log('status', status);
+			//we have the video uploaded, now we need to wait for encoding to occur
 	  		playable = videoStats.encoding.playable;
 	  		console.log('video playable?',videoStats.encoding.playable, playable);
 	  		if (playable){
@@ -140,17 +146,24 @@ app.post('/', (req,res) =>{
 				console.log("video uploaded in: ", uploadSeconds);
 				console.log("video processed in: ", processSeconds);
 	  			console.log(iframe);
+				if(useProduction){
+					//if user submitted an email - we are in prod - and can email the link to the videos.
+					intercomIntegration(fields.email,player, mp4,mp4Support,uploadSeconds,processSeconds);
+				}
 	  			return res.render('video', {iframe, player, uploadSeconds,processSeconds});	
 	  		}else{
 	  			//not ready so check again in 2 seconds.
 	  			console.log("not ready yet" );
 	  			setTimeout(videoStatus(video),2000);
 	  		}
+
+			
+			
 	  	}).catch(function(error) {
 	  	  console.error(error);
 	  	});;	
 	  }  
-	
+	  
 	  
       
 	  
@@ -165,6 +178,56 @@ app.post('/', (req,res) =>{
   // res.sendStatus(200);	
 });
 });
+
+function intercomIntegration(email,player, mp4,mp4Support,upload,process){
+    //while the video is processing, upload the email to intercom
+	//there is a valid email address, let's write it to Indercom
+	// Create a contact with attributes
+	intercomClient.leads.create({ email: email, tags: "upload demo"}, function (r) {
+	  //console.log(r);
+	  console.log("user creation:", r.body);
+	  let intercomId = r.body.id;
+	  //add upload demo tag
+	  intercomClient.tags.tag({ name: 'upload demo', users: [{ id: intercomId }] }, function (tag){
+		  console.log("tag addition", tag.body);
+	  });
+	  //send an email with the video links
+	  var emailbody = "";
+	  if (mp4Support) {
+	    emailbody = "Hi there,\n  thank you for using our upload demo.  Your video was uploaded in "+upload+" seconds, and processed in "+process+" seconds. You can see your video here: "
+	                  +player+".  You can view the mp4 at " + mp4 +". Come learn more at <a href\"https://api.video\">api.video</a>"
+					  +"\n Thanks, \n the api.video team";
+	  }else{
+		  emailbody = "Hi there,\n  thank you for using our upload demo.  Your video was uploaded in "+upload+" seconds, and processed in "+process+" seconds. You can see your video here: "
+	                  +player+". Come learn more at <a href\"https://api.video\">api.video</a>"
+		  				+"\n Thanks, \n the api.video team";
+	  		
+	  }
+	  console.log("emailbody", emailbody);
+	  console.log("intercom admin:", intercomAdmin);
+	  var message = {
+	    message_type: "email",
+	    subject: "Thank you for using the api.video upload demo",
+	    body: emailbody,
+	    template: "plain",
+	    from: {
+	      type: "admin",
+			id: intercomAdmin
+	    },
+	    to: {
+	      type: "user",
+	      id: intercomId
+	    }
+	  }
+	  intercomClient.messages.create(message, function(email){
+		  console.log("email: ", email.body);
+	  }); 
+	});
+ 
+	
+	
+}
+
 
 app.listen(3000, () =>
   console.log('Example app listening on port 3000!'),

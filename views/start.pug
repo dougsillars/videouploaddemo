@@ -6,17 +6,14 @@ body
     h1 Test out api.video
   
   h2 Upload a video, and have an encoded video stream in no time!  
-  h2 If you add your e-mail address, your video will be available without watermark. 
-  h2 Without an e-mail address, your video will be watermarked and deleted in 72 hours.
+  h2 Add your e-mail address to receive a link to our video without watermark. 
+  h2 If you do not submit an e-mail address, your video will be watermarked and deleted after 72 hours.
   
   form(action="/" method = "POST" enctype="multipart/form-data").form  
     | Upload a video:
     p
     | Video Name:
     input(type='text', name='title', value="video title").input
-    p
-    | Description:
-    input(type='text', name='description', value="video description").input
     p
     | Email Address:
     input(type='email', name='email').input
