@@ -1,1 +1,13 @@
-Cool stuff is coming
+This is a Node based video uploader described in detail in this Medium post.
+
+To run this on AWS - simply clone the repo to your server.  Create a .env file for your environmental variables (api.video key, Intercom key and adminId and the location that videos are saved (look for "process.env" in the code for the variables)).  Install the node modues required:
+
+npm install express dotenv @api.video/nodejs-sdk fs pug serve-favicon formidable email-validator 
+
+This tutorial also optionally connects to Intercom to send emails to your users.  This will require:
+
+npm install intercom-client
+
+
+This will get your server running on port 3000.  Use Nginx to redirect port 3000 to port 80.  Finally, you'll need to configure Nginx to allow [large downloads](https://www.cyberciti.biz/faq/linux-unix-bsd-nginx-413-request-entity-too-large/).
+

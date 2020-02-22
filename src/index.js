@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('view engine','pug');
 app.use(express.static('public/'));
-//favicons are the cool liettle icon ib the tab
+//favicons are the cool little icon in the browser tab
 var favicon = require('serve-favicon');
 app.use(favicon('public/icon.ico')); 
 
@@ -72,13 +72,14 @@ app.post('/', (req,res) =>{
 	if (fields.mp4 =="true"){
 		mp4Support = true;	
 	}
+	let description = "movie description";
 	//if email address is added use prod
 	let useProduction = true;
 	console.log('valid email?', fields.email, validator.validate(fields.email));
 	if(validator.validate(fields.email)){
 		//prod
         console.log("using production!");
-		
+		description = "video uploaded by: "+fields.email;
 	}else{
 		//sandbox
 		//set up api.video client with my sandbox key
@@ -92,7 +93,7 @@ app.post('/', (req,res) =>{
 	//uploading.  Timers are for a TODO measuring upload & parsing time
 	startUploadTimer = Date.now();
 	console.log("start upload", startUploadTimer);
-	let result = client.videos.upload(files.source.path, {title: fields.title, mp4Support: mp4Support});
+	let result = client.videos.upload(files.source.path, {title: fields.title, mp4Support: mp4Support, description: description});
 	
 	//the result is the upload response
 	//see https://docs.api.video/5.1/videos/create-video
@@ -114,12 +115,10 @@ app.post('/', (req,res) =>{
 	  console.log('player', video.assets.player);
 	  let iframe = video.assets.iframe;
 	  let player = video.assets.player;
-	  let mp4 = video.assets.mp4;
+	  let mp4 = "";
 	  
 	  
 
-	  
-	  
 	  //check video status until it is published
 	  //when video is playable resturn the video page
 	  videoStatus(video);
@@ -138,6 +137,7 @@ app.post('/', (req,res) =>{
 	  		console.log('video playable?',videoStats.encoding.playable, playable);
 	  		if (playable){
 	  			//video is ready to be played
+				//and we can get the mp4 url now as well
 	  			console.log("ready to play the video");
 	  			playReadyTimer = Date.now();
 				let uploadSeconds = (uploadCompleteTimer-startUploadTimer)/1000;
@@ -145,11 +145,18 @@ app.post('/', (req,res) =>{
 				console.log("video uploaded in: ", uploadSeconds);
 				console.log("video processed in: ", processSeconds);
 	  			console.log(iframe);
-				if(useProduction){
-					//if user submitted an email - we are in prod - and can email the link to the videos.
-					intercomIntegration(fields.email,player, mp4,mp4Support,uploadSeconds,processSeconds);
-				}
-	  			return res.render('video', {iframe, player, uploadSeconds,processSeconds});	
+		        //now we can get the MP4 url, and send the email and post the response
+				let videoMp4 = client.videos.get(videoId);
+				videoMp4.then(function(mp4Stats) {
+		   	 		console.log("videomp4status",mp4Stats);
+		   			mp4 = mp4Stats.assets.mp4;
+		   			console.log("mp4 url", mp4);
+					if(useProduction){
+						//if user submitted an email - we are in prod - and can email the link to the videos.
+						intercomIntegration(fields.email,player, mp4,mp4Support,uploadSeconds,processSeconds);
+					}
+	  				return res.render('video', {iframe, player, uploadSeconds,processSeconds});
+		   	 	}); 	
 	  		}else{
 	  			//not ready so check again in 2 seconds.
 	  			console.log("not ready yet" );
@@ -172,9 +179,9 @@ app.post('/', (req,res) =>{
 	  console.error(error);
 	});
 	
-	console.log(result.response);
+//	console.log(result.response);
 
-  // res.sendStatus(200);	
+
 });
 });
 
@@ -218,8 +225,8 @@ function intercomIntegration(email,player, mp4,mp4Support,upload,process){
 		  				+"\n Thanks, \n the api.video team";
 	  		
 	  }
-	  console.log("emailbody", emailbody);
-	  console.log("intercom admin:", intercomAdmin);
+//	  console.log("emailbody", emailbody);
+//	  console.log("intercom admin:", intercomAdmin);
 	  var message = {
 	    message_type: "email",
 	    subject: "Thank you for using the api.video upload demo",
