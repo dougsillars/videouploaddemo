@@ -79,6 +79,7 @@ app.post('/', (req,res) =>{
 	if(validator.validate(fields.email)){
 		//prod
         console.log("using production!");
+		client = new apiVideo.Client({ apiKey: process.env.apivideoKeyProd});
 		description = "video uploaded by: "+fields.email;
 	}else{
 		//sandbox
