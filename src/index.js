@@ -39,13 +39,13 @@ var validator = require("email-validator");
 
 //get request is the initial request - loads the start.pug
 //start.pug has the form
-app.get('/', (req, res) => {
+app.get('/upload-demo', (req, res) => {
   return res.render('start');
 });
 
 //the form posts the data to the same location
 //so now we'll deal with the submitted data
-app.post('/', (req,res) =>{
+app.post('/upload-demo', (req,res) =>{
 	
     //formidable reads the form
 	var form = new formidable.IncomingForm();
