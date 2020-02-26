@@ -11,3 +11,5 @@ npm install intercom-client
 
 This will get your server running on port 3000.  Use Nginx to redirect port 3000 to port 80.  Finally, you'll need to configure Nginx to allow [large downloads](https://www.cyberciti.biz/faq/linux-unix-bsd-nginx-413-request-entity-too-large/).
 
+For more details on the implementation, read our blog post: [https://medium.com/@api.video/building-a-video-upload-demo-with-node-js-and-api-video-3d3519d03e8f](https://medium.com/@api.video/building-a-video-upload-demo-with-node-js-and-api-video-3d3519d03e8f)
+
