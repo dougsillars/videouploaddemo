@@ -10,13 +10,16 @@ body
   h2 If you do not submit an e-mail address, your video will be watermarked and deleted after 72 hours.
   
   
-  form(action="/upload-demo" method = "POST" enctype="multipart/form-data").form  
+  form(action="/" method = "POST" enctype="multipart/form-data").form  
     p
     | Video Name:
     input(type='text', name='title', value="video title").input
     p
-    | Email Address:
-    input(type='email', name='email').input
+    | Video Description:
+    input(type='text', name='description', value="video description").input
+    p
+    | Video Tags (separate by commas):
+    input(type='text', name='tag', value="twitter").input
     p
     |Save as Mp4?
     input(type='radio', name='mp4', value='true', checked) 

@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@api.video/nodejs-sdk": "^1.8.2",
+    "body-parser": "^1.19.0",
     "dotenv": "^8.2.0",
     "email-validator": "^2.0.4",
     "express": "^4.17.1",

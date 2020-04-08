@@ -11,10 +11,6 @@ const apiVideo = require('@api.video/nodejs-sdk');
 var client = new apiVideo.Client({ apiKey: process.env.apivideoKeyProd});
 
 
-//using intercom to read the email address and save as a contact
-var Intercom = require('intercom-client');
-var intercomClient = new Intercom.Client({ token: process.env.intercomToken });
-const intercomAdmin = process.env.intercomAdminId;
 //express for the website and pug to create the pages
 const app = express();
 const pug = require('pug');
@@ -25,7 +21,9 @@ app.use(express.static('public/'));
 //favicons are the cool little icon in the browser tab
 var favicon = require('serve-favicon');
 app.use(favicon('public/icon.ico')); 
-
+//app.use(express.limit('2G'));
+var bodyParser = require('body-parser')
+app.use(bodyParser.json({limit: '2Gb'}));
 
 //formidable takes the form data and saves the file, and parameterises the fields into JSON
 const formidable = require('formidable')
@@ -39,16 +37,16 @@ var validator = require("email-validator");
 
 //get request is the initial request - loads the start.pug
 //start.pug has the form
-app.get('/upload-demo', (req, res) => {
+app.get('/', (req, res) => {
   return res.render('start');
 });
 
 //the form posts the data to the same location
 //so now we'll deal with the submitted data
-app.post('/upload-demo', (req,res) =>{
+app.post('/', (req,res) =>{
 	
     //formidable reads the form
-	var form = new formidable.IncomingForm();
+	var form = new formidable.IncomingForm({maxFileSize : 2000 * 1024 * 1024}); //2 Gb
 	//use .env feil to set the directory for the video uploads
 	//since we will be deleting the files after they uplaod to api.video
 	//make sure this directory is full write and delete
@@ -72,9 +70,12 @@ app.post('/upload-demo', (req,res) =>{
 	if (fields.mp4 =="true"){
 		mp4Support = true;	
 	}
-	let description = "movie description";
+	let description = fields.description;
+	let videoTitle = fields.title;
+	let videoTags = fields.tag;
 	//if email address is added use prod
 	let useProduction = true;
+	/*
 	console.log('valid email?', fields.email, validator.validate(fields.email));
 	if(validator.validate(fields.email)){
 		//prod
@@ -88,13 +89,13 @@ app.post('/upload-demo', (req,res) =>{
 		console.log("using sandbox!");
 		useProduction = false;
 	}
-		
+	*/
 	//metadata must be converted into an array
 	
 	//uploading.  Timers are for a TODO measuring upload & parsing time
 	startUploadTimer = Date.now();
 	console.log("start upload", startUploadTimer);
-	let result = client.videos.upload(files.source.path, {title: fields.title, mp4Support: mp4Support, description: description});
+	let result = client.videos.upload(files.source.path, {title: videoTitle, mp4Support: mp4Support, description: description});
 	
 	//the result is the upload response
 	//see https://docs.api.video/5.1/videos/create-video
@@ -147,15 +148,16 @@ app.post('/upload-demo', (req,res) =>{
 				console.log("video processed in: ", processSeconds);
 	  			console.log(iframe);
 		        //now we can get the MP4 url, and send the email and post the response
+				//now we add the tags to let zapier know it s ready to go
+				client.videos.update(videoId, {tags: [videoTags]});
+				
+				
 				let videoMp4 = client.videos.get(videoId);
 				videoMp4.then(function(mp4Stats) {
 		   	 		console.log("videomp4status",mp4Stats);
 		   			mp4 = mp4Stats.assets.mp4;
 		   			console.log("mp4 url", mp4);
-					if(useProduction){
-						//if user submitted an email - we are in prod - and can email the link to the videos.
-						intercomIntegration(fields.email,player, mp4,mp4Support,uploadSeconds,processSeconds);
-					}
+
 	  				return res.render('video', {iframe, player, uploadSeconds,processSeconds});
 		   	 	}); 	
 	  		}else{
@@ -186,70 +188,7 @@ app.post('/upload-demo', (req,res) =>{
 });
 });
 
-function intercomIntegration(email,player, mp4,mp4Support,upload,process){
-    //while the video is processing, upload the email to intercom
-	//there is a valid email address, let's write it to Indercom
-	// Create a contact with attributes
-	intercomClient.leads.create({ email: email, tags: "upload demo"}, function (r) {
-		var intercomId="";
-		console.log("user creation:", r.body);
-		if(r.body.errors){
-			//user already exists
-			//get the ID
-			var errorString = r.body.errors[0].message;
-			console.log("errorstring",errorString);
-			var idStart = errorString.lastIndexOf("=") +1;
-			
-			intercomId =errorString.substring(idStart);
-			console.log("retrived id",intercomId);
-			
-		}else {
-			//user created
-			intercomId = r.body.id;
-			console.log("user creation:", r.body);
-		}
-	  
-	  
-	  //add upload demo tag
-	  intercomClient.tags.tag({ name: 'upload demo', users: [{ id: intercomId }] }, function (tag){
-		  console.log("tag addition", tag.body);
-	  });
-	  //send an email with the video links
-	  var emailbody = "";
-	  if (mp4Support) {
-	    emailbody = "Hi " +email+",\n  Thank you for using our upload demo.  Your video was uploaded in "+upload+" seconds, and processed in "+process+" seconds. You can see your video here: "
-	                  +player+".  You can view the mp4 at " + mp4 +". Come learn more at <a href\"https://api.video\"> api.video</a>"
-					  +"\n Thanks, \n the api.video team";
-	  }else{
-		  emailbody = "Hi " +email+",\n  Thank you for using our upload demo.  Your video was uploaded in "+upload+" seconds, and processed in "+process+" seconds. You can see your video here: "
-	                  +player+". Come learn more at <a href\"https://api.video\"> api.video</a>"
-		  				+"\n Thanks, \n the api.video team";
-	  		
-	  }
-//	  console.log("emailbody", emailbody);
-//	  console.log("intercom admin:", intercomAdmin);
-	  var message = {
-	    message_type: "email",
-	    subject: "Thank you for using the api.video upload demo",
-	    body: emailbody,
-	    template: "plain",
-	    from: {
-	      type: "admin",
-			id: intercomAdmin
-	    },
-	    to: {
-	      type: "user",
-	      id: intercomId
-	    }
-	  }
-	  intercomClient.messages.create(message, function(email){
-		  console.log("email: ", email.body);
-	  }); 
-	});
- 
-	
-	
-}
+
 
 
 app.listen(3000, () =>
