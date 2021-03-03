@@ -35,7 +35,7 @@
     "formidable": "^1.2.1",
     "fs": "0.0.1-security",
     "intercom-client": "^2.11.0",
-    "pug": "^2.0.4",
+    "pug": "^3.0.1",
     "serve-favicon": "^2.5.0"
   }
 }
